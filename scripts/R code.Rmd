@@ -50,7 +50,7 @@ patents <- patents_granted_total |>
 ```{r}
 # pivots
 gdp_pcap <- gdp_pcap |> 
-  pivot_longer(!country, names_to = "year", values_to = "gdp/capita")
+  pivot_longer(!country, names_to = "year", values_to = "gdp")
 
 patents <- patents |> 
   pivot_longer(!country, names_to = "year", values_to = "n_patents")
@@ -76,4 +76,18 @@ NAs |>
   kable()
 
 ```
+
+## Finishing Data Cleaning
+
+```{r}
+gdp_patent <- gdp_patent |> 
+  drop_na()
+gdp_patent |> 
+  group_by(country) |> 
+  summarise(mean_gdp = mean(gdp),
+            mean_patent = mean(n_patents)) |> 
+  ggplot(mapping = aes(x = mean_gdp, y = mean_patent)) +
+  geom_point()
+```
+
 
