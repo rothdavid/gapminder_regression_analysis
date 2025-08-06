@@ -1,0 +1,79 @@
+---
+title: "Regression Analysis Project"
+author: "David Roth"
+date: "2025-08-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+```{r} 
+# loading in data
+gdp_pcap <- read.csv("../data/gdp_pcap.csv")
+patents_granted_total <- read.csv("../data/patents_granted_total.csv")
+```
+
+## Data Cleaning
+
+```{r}
+gdp_pcap <- gdp_pcap |> 
+  mutate(across(!"country", 
+                ~ case_when(
+                  str_detect(.x, "k") ~ as.numeric(str_remove(.x, "k")) * 1000,
+                                      TRUE ~ as.numeric(.x)
+                                      ))) |> 
+  rename_with( ~ str_remove(.x, "X"), everything())
+
+
+
+patents <- patents_granted_total |> 
+  mutate(across(!"country", 
+                ~ case_when(
+                  str_detect(.x, "k") ~ as.numeric(str_remove(.x, "k")) * 1000,
+                                      TRUE ~ as.numeric(.x)
+                                      ))) |> 
+  rename_with( ~ str_remove(.x, "X"), everything())
+
+# renamed columns
+# converted units from k into 1000s
+
+```
+
+```{r}
+# pivots
+gdp_pcap <- gdp_pcap |> 
+  pivot_longer(!country, names_to = "year", values_to = "gdp/capita")
+
+patents <- patents |> 
+  pivot_longer(!country, names_to = "year", values_to = "n_patents")
+
+# combining data
+gdp_patent <- patents |> 
+  left_join(gdp_pcap, join_by("country" == "country",
+                              "year" == "year"))
+
+```
+
+## Investigation NA Data
+
+```{r}
+# getting all NAs
+NAs <- gdp_patent |> 
+  filter(if_any(!country, ~is.na(.x)))
+
+NAs |>
+  group_by(country) |> 
+  count() |> 
+  arrange(desc(n)) |> 
+  kable()
+
+```
+
